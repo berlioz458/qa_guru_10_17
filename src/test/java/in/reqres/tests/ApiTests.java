@@ -1,0 +1,110 @@
+package in.reqres.tests;
+
+import io.qameta.allure.Feature;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
+import io.qameta.allure.Story;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.stream.Stream;
+
+import static io.restassured.RestAssured.get;
+import static io.restassured.RestAssured.given;
+import static io.restassured.http.ContentType.JSON;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.is;
+
+public class ApiTests {
+
+    // GET /api/users/<id>
+    // 1. success get by id = 10, check id +
+    // 2. success get by id = 10, check email +
+    // 3. not found error get by id = zero, big, negative +
+
+    @Feature("Method Get User by id")
+    @DisplayName("The test checks if the returned id is correct in the response query by id")
+    @Story("The test checks if the returned id is correct in the response query by id")
+    @Severity(SeverityLevel.CRITICAL)
+    @Test
+    void checkIdInAnswerForQueryById() {
+        Integer res =
+                get("https://reqres.in/api/users/10")
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .path("data.id");
+
+        assertThat(res).isEqualTo(10);
+    }
+
+    @Feature("Method Get User by id")
+    @DisplayName("The test checks if the returned email is correct in the response query by id")
+    @Story("The test checks if the returned email is correct in the response query by id")
+    @Severity(SeverityLevel.CRITICAL)
+    @Test
+    void checkEmailInAnswerForQueryById() {
+        String res =
+                get("https://reqres.in/api/users/10")
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .path("data.email");
+
+        assertThat(res).isEqualTo("byron.fields@reqres.in");
+    }
+
+    @Feature("Method Get User by id")
+    @Story("The test checks for an error when queried for a non-existent id")
+    @Severity(SeverityLevel.CRITICAL)
+    @ValueSource(strings = {"0", "1000000", "-666"})
+    @ParameterizedTest(name = "The test checks for an error when queried for a non-existent id {0}")
+    void foundErrorForQueryById(String id) {
+        given().
+                when().
+                get("https://reqres.in/api/users/" + id)
+                .then()
+                .statusCode(404);
+    }
+
+
+    // POST /api/users with body - name and job
+    // 1. success create with some test user's (params)
+    // 2. ? with only name / only job - don't create
+
+
+    public static Stream<Arguments> methodParams() {
+        return Stream.of(
+                Arguments.of("Petya", "QA Lead"),
+                Arguments.of("Vova", "QA Automation"),
+                Arguments.of("Liza", "QA Middle Manual"),
+                Arguments.of("Jora", "QA Middle Manual")
+        );
+    }
+
+    @Feature("Method Post User Create")
+    @Story("The test checks if the user was successfully created")
+    @Severity(SeverityLevel.CRITICAL)
+    @ParameterizedTest(name = "The test checks if the user was successfully created")
+    @MethodSource("methodParams")
+    void successCreateUser(String name, String job) {
+        String body = "{ \"name\": \""+ name + "\", " +
+                "\"job\": \"" + job + "\" }";
+
+        given()
+                .contentType(JSON)
+                .body(body)
+                .when()
+                .post("https://reqres.in/api/users")
+                .then()
+                .statusCode(201)
+                .body("name", is(name))
+                .body("job", is(job));
+
+    }
+
+}
