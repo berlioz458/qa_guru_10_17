@@ -118,7 +118,7 @@ public class ApiTests {
                 .contentType(JSON)
                 .body(body)
                 .when()
-                .put("https://reqres.in/api/users/10")
+                .put("https://reqres.in/api/users/10")// так же изменение , ид прикручен гайками
                 .then()
                 .statusCode(200)
                 .body("name", is("test"));
