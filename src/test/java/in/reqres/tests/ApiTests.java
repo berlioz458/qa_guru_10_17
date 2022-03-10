@@ -3,7 +3,6 @@ package in.reqres.tests;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
-import io.qameta.allure.Story;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,7 +18,10 @@ import static io.restassured.http.ContentType.JSON;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 
+@Severity(SeverityLevel.CRITICAL)
 public class ApiTests {
+
+    String idx = "5";
 
     // GET /api/users/<id>
     // 1. success get by id = 10, check id +
@@ -28,8 +30,6 @@ public class ApiTests {
 
     @Feature("Method Get User by id")
     @DisplayName("The test checks if the returned id is correct in the response query by id")
-    @Story("The test checks if the returned id is correct in the response query by id")
-    @Severity(SeverityLevel.CRITICAL)
     @Test
     void checkIdInAnswerForQueryById() {
         Integer res =
@@ -40,12 +40,11 @@ public class ApiTests {
                         .path("data.id");
 
         assertThat(res).isEqualTo(10);
+
     }
 
     @Feature("Method Get User by id")
     @DisplayName("The test checks if the returned email is correct in the response query by id")
-    @Story("The test checks if the returned email is correct in the response query by id")
-    @Severity(SeverityLevel.CRITICAL)
     @Test
     void checkEmailInAnswerForQueryById() {
         String res =
@@ -59,8 +58,6 @@ public class ApiTests {
     }
 
     @Feature("Method Get User by id")
-    @Story("The test checks for an error when queried for a non-existent id")
-    @Severity(SeverityLevel.CRITICAL)
     @ValueSource(strings = {"0", "1000000", "-666"})
     @ParameterizedTest(name = "The test checks for an error when queried for a non-existent id {0}")
     void foundErrorForQueryById(String id) {
@@ -87,16 +84,13 @@ public class ApiTests {
     }
 
     @Feature("Method Post User Create")
-    @Story("The test checks if the user was successfully created")
-    @Severity(SeverityLevel.CRITICAL)
     @ParameterizedTest(name = "The test checks if the user was successfully created")
     @MethodSource("methodParams")
     void successCreateUser(String name, String job) {
         String body = "{ \"name\": \""+ name + "\", " +
                 "\"job\": \"" + job + "\" }";
-
-        given()
-                .contentType(JSON)
+        given().
+                contentType(JSON)
                 .body(body)
                 .when()
                 .post("https://reqres.in/api/users")
@@ -104,7 +98,32 @@ public class ApiTests {
                 .statusCode(201)
                 .body("name", is(name))
                 .body("job", is(job));
-
     }
+
+    @Feature("Method Delete User")
+    @Test
+    void successDeleteUser() {
+        given()
+                .when()
+                .delete("https://reqres.in/api/users/" + idx)// тут бы взять ид и так же параметризовать, но как сделать так чтобы тест бежал после выполнения POST-а, и вообще в конце всех тестов...???
+                .then()
+                .statusCode(204);
+    }
+
+    @Feature("Method PUT User")
+    @Test
+    void successPutUser() {
+        String body = "{ \"name\": \"test\" }";
+        given()
+                .contentType(JSON)
+                .body(body)
+                .when()
+                .put("https://reqres.in/api/users/10")
+                .then()
+                .statusCode(200)
+                .body("name", is("test"));
+    }
+
+
 
 }
